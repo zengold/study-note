@@ -290,13 +290,3 @@ L1 caching维护了一个key到多个请求者的对应关系，每当其他节�
 
 Infinispan采用Java开发，性能上和redis相当，但资源消耗和CPU耗费上高于redis。Infinispan支持各种Java类型存储，集成度更好。
  可靠性上，redis和infinispan均不能保证100%的可靠性、数据一致性，相较来说，个人认为infinispan可靠性更高。
-
-
-
-作者：随安居士
-
-链接：https://www.jianshu.com/p/d9e6912aaab1
-
-来源：简书
-
-简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。

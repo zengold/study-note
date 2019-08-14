@@ -2,10 +2,7 @@ Linux
 
 关闭防火墙 重启失效 service iptables stop
 
-
-
 service firewalld stop
-
 
 
 ps -ef | grep java
