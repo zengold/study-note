@@ -15,3 +15,13 @@ clean deploy
 
 
 
+打caas-start 的包，先打其依赖
+
+mvn clean package -pl caas-start -am  -DskipTests
+
+
+
+单独拿出所有依赖
+
+mvn clean dependency:copy-dependencies
+

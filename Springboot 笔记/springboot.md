@@ -4,6 +4,8 @@
 
 官方文档 https://docs.spring.io/spring-boot/docs/2.0.6.RELEASE/reference/htmlsingle/
 
+1. 
+
 # 2 Spring Boot 的背景
 
 2014年，martin fowler 发表了一篇博客，表述了微服务的好处。微服务与单体应用，都是一种架构风格。
@@ -475,13 +477,13 @@ private boolean boss;
 
 ### 7.2.3 @Value 对比 @ConfigurationProperties
 
-|                       | @ConfigurationProperties                              | @Value         |
-| --------------------- | ----------------------------------------------------- | -------------- |
-| 功能                  | 批量注入配置文件中的属性                              | 一个个指定     |
-| 语法支持              | 松散绑定，如配置文件中 lastName 与 last-name 是同样的 | 不支持松散绑定 |
-| SpEL                  | 不支持                                                | 支持           |
-| JSR303数据校验        | 支持                                                  | 不支持         |
-| 复杂类型封装，例如Map | 支持                                                  | 不支持         |
+|                             | @ConfigurationProperties                              | @Value         |
+| --------------------------- | ----------------------------------------------------- | -------------- |
+| 功能                        | 批量注入配置文件中的属性                              | 一个个指定     |
+| 语法支持                    | 松散绑定，如配置文件中 lastName 与 last-name 是同样的 | 不支持松散绑定 |
+| SpEL                        | 不支持                                                | 支持           |
+| JSR303数据校验              | 支持                                                  | 不支持         |
+| 复杂类型封装，例如Map，List | 支持                                                  | 不支持         |
 
 如果只是使用一下配置文件的值，那么就只需要使用@Value
 
@@ -597,7 +599,7 @@ spring:
 
 ### 7.6.1 **互补配置**
 
-根据配置文件的优先级顺序，配置文件之间可以形式互补，即上一个配置文件没有写的内容，写到下个配置文件上同样是生效的。配置文件之间只有相同的配置项互相覆盖（即应用最后生效的），不相同的配置项互补。
+根据配置文件的优先级顺序，配置文件之间可以形式互补，即上一个配置文件没有写的内容，写到下个配置文件上同样是生效的。配置文件之间只有相同的配置项互相覆盖，不相同的配置项互补。
 
 ### 7.6.2 **spring.config.location** 
 
@@ -627,7 +629,7 @@ spring:
 
 ### 7.8.1 原理
 
-1. springboot启动的时候加载主配置类，开启了自动配置功能 @EnableAutoConfiguration
+1. springboot启动的时候加载煮配置类，开启了自动配置功能 @EnableAutoConfiguration
 2. @EnableAutoConfiguration 作用：
 
 - 利用 AutoConfigurationImportSelector 给容器导入一些组件
@@ -788,8 +790,7 @@ public class HttpEncodingAutoConfiguration {
 		this.properties = properties;
 	}
     
-    //给容器中添加一个组件，这个组件的某些值需要从配置文件中获取,所以这里才是为什么我们能配置的根本原因
-    @Bean	
+    @Bean	//给容器中添加一个组件，这个组件的某些值需要从配置文件中获取,所以这里才是为什么我们能配置的根本原因
 	@ConditionalOnMissingBean
 	public CharacterEncodingFilter characterEncodingFilter() {
 		CharacterEncodingFilter filter = new OrderedCharacterEncodingFilter();
@@ -937,9 +938,9 @@ logging.file=xxx
 logging.path=xxx
 
 # 在控制台输出的格式
-logging.pattern.console='%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n'
+logging.pattern.console=
 # 在日志文件输出的格式
-logging.pattern.file='%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n'
+logging.pattern.file=%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n
 
 # %d 表示日期时间
 # %thread 表示线程名
@@ -1085,7 +1086,7 @@ public class HelloWorldController {
 
 留意注释，同时需要注意 controller 类上没有使用 @RestController 而是使用 @Controller，因为使用 @RestController 之后相当于自动为每个请求接口都加上 @ResponseBody 注解，那么就会导致 success 请求直接返回 “success”。
 
-![](.\图片\thymeleaf例子-1.png)
+![](C:\Users\2018041611\Desktop\学习笔记\Springboot 笔记\图片\thymeleaf例子-1.png)
 
 ![](.\图片\thymeleaf例子-2.png)
 
@@ -1111,7 +1112,7 @@ public String grammar(Map<String, Object> map) {
 <div th:text="${div}">不经过thymeleaf渲染的div内容</div>
 ```
 
-![](.\图片\thymeleaf语法.png)
+![](C:\Users\2018041611\Desktop\学习笔记\Springboot 笔记\图片\thymeleaf语法.png)
 
 #### th:
 
@@ -1121,10 +1122,10 @@ public String grammar(Map<String, Object> map) {
 
 在官方使用手册第10章，有关于这些属性的优先级，列出了可以使用的属性：
 
-![](.\图片\thymeleaf-th属性.png)
+![](C:\Users\2018041611\Desktop\学习笔记\Springboot 笔记\图片\thymeleaf-th属性.png)
 
 - th:insert / th:replace - 用于片段包含，就像 jsp:include 
-- th:each - 遍历，相当于jsp里的 c:foreach
+- th:each / th:if - 遍历，相当于jsp里的 c:foreach
 - th:if / th:unless / th:switch / th:case - 用于条件判断
 - th:object / th:with - 声明变量
 - th:attr / th:attrprepend / th:attrappend - 任意属性修改，支持前后添加内容
@@ -1967,106 +1968,222 @@ public ServletRegistrationBean<DispatcherServlet> dispatcherServletRegistration(
 }
 ```
 
+# 17 Springboot 与 Docker
 
+## 17.1 docker 的安装和简单使用
 
+### 17.1.1 开启、停止
 
+```sh
+# docker 安装
+yum install docker
 
+# docker 启动(重启失效，即不会开机启动)
+systemctl start docker
 
+# docker 开机启动
+systemctl enable docker
 
-
-
-
-
-
-
-
-
-# springboot Dokcer
-
-## 1. 简介
-
-Docker 是一个开源的应用容器引擎。
-
-docker 就像给电脑装系统，装一个原生的win系统，安装完系统后还需要装驱动，装常用软件，但是另一个人也想装系统，那原来他也需要安装原生系统，再装驱动和常用软件，但是，docker 就可以将前面一个已经装好系统的电脑以及里面的驱动、常用软件，打包成一个镜像，直接给另一台电脑装，那么另一台电脑上面也会有原生系统、驱动和常用软件，同时参数等都已经配置好了的。
-
-Docker 支持将软件编译成一个镜像，然后在镜像中各种软件做好了配置，将镜像发布出去，其他使用者可以直接使用这个镜像，就相当于直接使用这个软件了。
-
-运行中的这个镜像称为**容器**，容器的启动是非常快速的。
-
-## 2.核心概念
-
-docker 主机（Host）：安装了docker程序的机器（docker 直接安装在操作系统之上）
-
-docker客户端（Client）：连接docker主机进行操作
-
-dockers仓库(Registry)：用来保存打包好的镜像
-
-docker镜像（images）: 软件打包好的镜像
-
-docker 容器（container）: 镜像启动后称为容器
-
-
-
-使用流程：
-
-1. 安装docker
-2. 去docker仓库找到需要运行的软件镜像，下载到docker主机
-3. 使用docker运行这个镜像，这个镜像就会生成一个docker容器
-4. 对容器的启动、停止，就是对这个软件的启动、停止。
-
-
-
-## 3.安装docker
-
-### 3.1 安装虚拟机
-
-virtualBox
-
-设置好网络后，重启虚拟机网络：
-
-```shell
-service network restart
+# 停止 docker
+systemctl stop docker
 ```
 
+### 17.1.2 镜像操作
 
+docker 的镜像相当于别人打好的包
 
+```sh
+# 搜索仓库，也可以到 docker.hub 网页上去寻找，与这里找是同源的。注意出现的两个参数
+# 1. office - 是否官方的镜像
+# 2. Axxx - 是否自动构建，即是否开箱即用，如果不是，那么最好在 docker.hub 找到这个镜像，通常在该镜像页都会有详细的初始化设置
+docker search xxx
 
+# 拉取镜像。使用 tag 来拉取指定的版本，默认 tag 是 lasterst，即最新版
+docker pull [镜像名]:tag
 
+# 查看本机的镜像
+docker images
 
+# 删除镜像
+dockers rmi [镜像ID]
 
+# 运行镜像
+# --name 表示自定义容器名
+# -d 表示该容器在后台运行
+# 有 tag 就写上，缺省为 lastest
+docker run --name [自定义的容器名] -d [镜像名:tag]
 
+# 指定启动端口
+# -p 端口映射，[主机端口]:[容器内部端口]，这种是 TCP 端口。注意防火墙可能导致映射不成功的问题
+docker run -d -p 8080:8080 [镜像名:tag]
 
+# 将本机上 a 文件夹挂载（关联）到容器内 b 文件夹下
+docker run ... -v a:b
+```
 
+### 17.1.3 容器操作
 
+当 docker 中的镜像启动起来，就会形成一个容器，相当于将别人打好的包跑起来，形成一个应用。
 
+```sh
+# 查看运行的容器
+docker ps
 
+# 查看所有（包括停止了的）容器
+docker ps -a
 
+# 停止容器
+docker stop [容器ID/容器名]
 
+# 删除容器，删除前需要前停止
+docker rm [容器ID]
 
+# 启动已有的容器，即表明只是停止了的容器，并未删去
+docker start [容器ID/容器名]
 
+# 查看容器日志
+docker log [容器ID/容器名]
+```
 
+## 17.2 使用 docker 安装软件
 
+以安装 mysql 为例，按照 17.1 的内容从仓库中拉取 mysql 的镜像并以如下命令运行
 
+```sh
+docker run --name mysql01 -e MYSQL_ROOT_PASSWORD=123456 -d mysql
+```
 
+其中，`-e` 是在 docker.hub 上 mysql 官方提供的文档里找到的，表示在运行镜像时需要添加的配置，否则报错，因为没有指定密码。
 
+但这样还不行，还需要指定**映射端口**
 
+```sh
+# 完整
+docker run -p 3306:3306 --name mysql01 -e MYSQL_ROOT_PASSWORD=123456 -d mysql --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+```
 
+# 18 Springboot 与数据访问
 
+Springboot 中支持 JDBC、MyBetis、Spring Data JPA 等关系型数据库有联系，也可以与非关系型数据库有联系，如 NOSQL。
 
+**这些都是使用 Spring Data 访问的，Spring Data 相当于在众多的数据库实现之上再封装了一层，我们只需要面对 Spring Data 则可以在多种实现之间切换。**
 
+**以上需要通过引入 spring-boot-starter-data-xxx ，来导入相应的启动器**
 
+## 18.1 JDBC
 
+### 18.1.1 引入 starter
 
+- spring-boot-starter-data-jdbc
+- spring-boot-starter-data-mysql
+- spring-boot-starter-data-web （方便演示使用）
 
+### 18.1.2 配置文件
 
+1. **默认使用 tomcat.jdbc.pool.DataSource 作为数据源。**通常很少使用这个数据源，使用 `spring.datasource.type` 来自定义数据源，其中 HikuriDataSource 性能较好。也可以自己写数据源。
+2. 从代码里可以发现数据源是由 spring boot 利用**反射**创建出来的
+3. 数据源的相关配置都在 **DataSourceProperties** 里，可以从中找到可以配置的内容。
 
+```yaml
+spring:
+  datasource: 
+    url: jdbc:mysql://localhost:3306/dbname
+    driver-claas-name: com.mysql.jdbc.Driver
+    username: root
+    password: 123456
+```
 
+### 18.1.3 代码分析
 
+DataSourceInitizlizer : ApplicationListener，启动时，会运行到这里类，类中有两个方法：
 
+1. runSchemaScripts(); - 运行建表语句
+2. runDataScripts(); - 运行插入数据的 sql 语句
 
+使用这两个功能，只需要将**对应文件**按规定命名即可（放到 resource 下）
 
+1. 建表文件：schema-*.sql，[默认，schema.sql, schema-all.sql]
+2. 插入数据：data-*.sql
 
+也可以直接在配置文件中配置：
 
+```yaml
+spring:
+  schema: 
+    - classpath: xxx.sql
+```
+
+> 注：重复建表会清空数据，所以第一次后去掉建表文件或配置
+
+### 18.1.4 操作数据库
+
+在 JDBC 中，自动配置了 **jdbcTemplate**，所以直接在需要使用的地方注入即可使用
+
+```java
+@Autowired
+JdbcTemplate jdbcTemplate
+
+public Map<String, Object> map() {
+	list<Map<String, Object>> maps = jdbcTemplate.queryForlist("select * from tablename");
+	return maps.get(0);
+}
+```
+
+## 18.2 整合 Druid 数据源
+
+druid 数据源是阿里巴巴开发的
+
+### 18.2.1 基础配置
+
+1. 引入 druid、maven
+2. 配置文件中加入 `spring.datasource.type=DruidDataSource`
+3. 基本配置依然在配置文件中即可配置，但 druid 中还存在一些配置是 DataSourceProperties 中没有定义的，所以如果需要使用这些功能，就需要自己编写配置类
+
+```java
+public class DruidConfig {
+    @ConfigurationProperties(prefix="spring.datasource")
+    @Bean
+    public DataSource druid() {
+        return new DruidDataSource();
+    }
+}
+```
+
+### 18.2.2 配置 Druid 监控
+
+Druid 有一个监控，可以监控数据库的使用情况，sql 的使用率等等。配置好后，通过 http://localhost:8080/druid 来登陆管理后台
+
+1. 配置一个管理后台的 Servlet
+
+```java
+public ServletRegistrationBean statViewServlet() {
+    // 可以用这个 bean 来配置一些管理参数，例如登陆用户、密码，允许和阻止谁登陆等
+    ServletRegistrationBean bean = new ServletRegistrationBean(new StatViewServlet(), "/druid/*");
+    Map<String, String> initParams = new HashMap<>();
+    initParams.put("loginUsername", "admin");
+    ...
+    bean.setInitParameters(initParams);
+}
+```
+
+2. 配置一个web监控的过滤器
+
+```java
+@Bean
+public FilterRegistrationBean webStatFilter() {
+    FilterRegistrationBean bean = new FilterRegistrationBean();
+    bean.setFilter(new WebStatFilter());
+    Map<String, String> initParams = new HashMap<>();
+    // 不作过滤的
+    initParams.put("exclusions", "*.js,*.css,/druid/*");
+    bean.setInitParameters(initParams);
+    // 所以都需要经过这个过滤器，除了排除的
+    bean.setUrlpatterns(Arrays.asList("/*"));
+    return bean;
+}
+```
+
+3. 效果
 
 
 

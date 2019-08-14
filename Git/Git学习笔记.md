@@ -155,16 +155,15 @@ $ git svn dcommit
 # 生成你自己的SSH key，会在你的用户目录下生成id_rsa和id_rsa.pub两个文件，id_rsa是私钥，不能泄露出去，id_rsa.pub是公钥。
 $ ssh-keygen -t rsa -C "youremail@example.com"
 
-# 将本地仓库关联到github远程仓库，需要先有本地仓库，然后在GitHub上仓库空仓库
+# 将本地仓库关联到github远程仓库，需要先有本地仓库，然后在GitHub上创建空仓库
 $ git remote add origin git@github.com:<username>/<repository>.git
 # 把本地仓库的内容推送到GitHub仓库，第一次推送master分支的所有内容
 $ git push -u origin master
 # 本地master分支的最新修改推送至GitHub
 $ git push origin master
+
 # 将远程仓库克隆到本地
 $ git clone git@github.com:<username>/<repository>.git
-
-git remote set-url origin [url]
 ```
 
 
