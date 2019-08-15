@@ -4,8 +4,6 @@
 
 官方文档 https://docs.spring.io/spring-boot/docs/2.0.6.RELEASE/reference/htmlsingle/
 
-1. 
-
 # 2 Spring Boot 的背景
 
 2014年，martin fowler 发表了一篇博客，表述了微服务的好处。微服务与单体应用，都是一种架构风格。
@@ -2185,9 +2183,269 @@ public FilterRegistrationBean webStatFilter() {
 
 3. 效果
 
+![](F:\study-note\Springboot 笔记\图片\druid 监控.jpg)
 
+## 18.3 整合 MyBaties
 
+> 可以不引入 JDBC 模块，因为 MyBaties 中包含，引入了也无所谓
 
+### 18.3.1 步骤
 
+1. 依然使用 Druid 作为数据源
+2. 数据库建表
+3. 创建 JavaBean（即实体类）
 
+### 18.3.2 使用 MyBaties 操作数据库
 
+#### 18.3.2.1 注解版
+
+1. **创建 Mapper(接口)**
+
+- @Mapper: 需要在对应 Mapping 上注解，告诉 spring boot 这是一个 Mapper。
+- 使用 @Select 等来表明方法的作用，以及在注解上编写 SQL 语句，如：
+  - @Select("select * from tablename where id=#{id}")
+  - @Delete("delete from tablename where id=#{id}")
+  - @Insert("insert into department(departmentName) values (#{departmentName})")
+  - @Update("update department set departmentName =#{departmentName} where id=#{id}")
+
+2. **写 Controller, 注入 Service / Mapper**
+
+- 主键 id 为自增，如果需要返回时，可用：
+
+  `@Options(useGeneratedKeys = true, keyProperty = "id")`
+
+  - useGeneratedKeys - 是否使用自增主键
+  - keyProperty - 使用自增主键的字段/属性
+
+- 驼峰命名与 xxx-xxx 的命名方式不能通用：
+
+  - 以前需要在配置文件中开启，现在 spring boot 可以使用代码配置
+  - 使用 ConfigurationCustomizer (MyBaties 的)
+
+  ```java
+  // spirngboot 的 @Configuration
+  @Configuration
+  public class MyBatiesConfig {
+      
+      @Bean
+      public ConfigurationCustomizer configurationCustomizer() {
+          return new ConfigurationCustomizer() {
+              
+              @Override
+              public void customize(Configuration configuration) {
+                  configuration.setMapUnderscoreToCamelCase(true);
+              }
+          }
+  	}
+  }
+  ```
+
+- @Mapper 这个注解逐个写在 Mapper 接口上很麻烦，所以可以在**启动类**中添加 **@MapperScan**  进行批量扫描。@MapperScan 中的 basepackage 与 value 相等。
+
+#### 18.3.2.2 配置版
+
+1. Mapper.java (interface) - 接口
+
+2. Mapper.xml - 接口映射文件，写 SQL
+
+3. mybaties-config.xml - MyBaties 的全局配置
+
+   - 设置驼峰命名法：
+
+   ![](F:\study-note\Springboot 笔记\图片\配置驼峰命名法.jpg)
+   
+4. application.yml 中使用 :
+
+   - `mybaties.config-location` 指定配置文件。
+   - `mybaties.mapper-locations` - 指定映射文件的包，即存放 Mapper.xml 的包
+
+> 注：
+>
+> ​	注解版和配置版是可以共用的
+
+## 18.4 整合 JPA
+
+### 18.4.1 SpringData 简介
+
+1. **Spring Data 是用来简化数据访问的操作**
+   - 提供使用流 - API 来对数据访问
+   - 提供一些 Repository 接口，包括基本的增删改查、基本的分页功能。我们需要使用时，继承这些接口即可
+
+![](F:\study-note\Springboot 笔记\图片\springdata简介.png)
+
+**所以我们只需要面对 SpringData 提供的接口即可，无需面对底层的实现。**
+
+2. **JPA 的规范，有多种实现，如：Hibernate、Toplink、OpenJPA 等等**
+
+   如果灭有 Spring Data，那么我们都需要学习各种实现。而 Spring Data 相当于对实现的再次封装，使得我们无需再次学习。
+
+   **默认使用 Hibernate**。
+
+### 18.4.2 整合 JPA
+
+1. 引入 JPA、MySQL、JDBC、Web 启动器
+
+   - JPA - 同样基于 ORM （Object Relationol Mapping - 对象关系映射） 思想，即和 Mybaties 相似，同样需要将**数据库表映射到实体类**中
+
+2. **封装实体类**
+
+   - @Entity - 告诉 JPA 这是一个实体类（和数据表映射的类）
+   - @Table(name="xxx") - 指定与哪个表映射。如果缺省，默认表名为类名小写
+   - @Id - 标记主键
+     - @Generated Value(strategy=GenerationType.IDENTITY) - 主键自增
+   - @Column - 数据表字段，可自定义
+
+3. 编写 Dao(接口) 来操作实体类，Spring Data 中称为 Repository。
+
+   ```java
+   interface xxxRepository extends JpaRepository<xx, xx>
+   
+   (1) JpaRepository<T, ID extends Serializable>
+   	T - 需要操作的实体类
+   	ID extends Serializable - 可序列的传入实体类的主键的类型
+   
+   (2) 配置文件中可设定自动创建或更新数据库表
+   	spring.jpa.hibernate.ddl-auto: update
+   	
+   (3)	打印 SQL
+   	spring.jpa.show-sql: true 
+   
+   (4) 添加 @Repository 注解
+   ```
+
+# 19 Spring Boot 启动配置原理
+
+主要介绍：
+
+1. 启动原理/流程
+2. 运行原理 - 涉及一些事件回调机制
+
+- 需要注意一些事件回调机制
+  - ApplicationContextInitializer - 需要配置再 META-INF/spring.factories
+  - SpringApplicationRunListener - 需要配置再 META-INF/spring.factories
+  - ApplicationRunner - 只需要放在 IOC 容器中
+  - CommandLineRunner -  - 只需要放在 IOC 容器中
+
+3. 自动配置原理
+
+## 19.1 启动流程
+
+1. **创建 SpringApplication 对象**
+
+![](F:\study-note\Springboot 笔记\图片\创建SpringApplication对象.png)
+
+2. 执行 run 方法
+   1. 获取 SpringApplicationRunListener 从 META-INF/spring.factories
+   2. 回调所有 Listener、starting()
+   3. 封装命令行参数 args
+   4. 准备环境，创建，完成后，回调 Listener、environmentsPrepared 方法
+   5. pringtBanner - 就是打印 Spring 图标
+   6. createApplicationContext - 创建 IOC 容器。其中会判断是否生成 Web 环境的 IOC 容器
+   7. prepareContext - 准备上下文环境
+      - 将上面准备的环境保存到 IOC 中
+      - applyInitializers() - 回调之前创建 SpringApplication 对象时，保存的 ApplicationContextInitializer 的 initializer 方法
+      - 回调所有 SpringApplicationRunListener 的 contextPrepared 方法
+      - 当 prepareContext 运行完成后，回调 SpringApplicationRunListener  的 contextLoaded 方法
+   8. 刷新容器 - IOC 容器初始化，如果是 Web 应用，会创建嵌入式的 Tomcat 
+      - 初始化 - 扫描、创建、加载所有组件的地方
+   9. 从 IOC 容器中，获取所有的 ApplicationRunner（先） / CommandLineRunner（后），并回调，有优先级
+   10. 所有的 SpringApplicationRunListener 回调 finished 方法
+   11. Spring boot 应用启动完成，返回 IOC 容器
+
+## 19.2 事件监听机制的测试
+
+上面提到了一些事件监听机制接口，可以编写类实况这些接口，简单的了解一下。
+
+- 需要创建目录、文件: META-INF/spring.factories
+  - ApplicationContextInitializer
+  - SpringApplicationRunListener
+
+![](F:\study-note\Springboot 笔记\图片\META-INF_spring-factories.png)
+
+>  注意：SpringApplicationRunListener 需要有参构造器，否则报错
+
+- 只需要添加 @Component 即可
+  - ApplicationRUnner
+  - CommandLineRunner
+
+# 20 自定义 starters
+
+**步骤**
+
+1. 这个场景需要使用的依赖
+
+2. 编写自动配置类 - 将需要启动就加载的自动配置类，配置在 META-INF/spring.factories。
+   
+   ![](F:\study-note\Springboot 笔记\图片\自定义自动配置类存放到spring_factories中.png)
+   
+   并使用这些注解：
+   
+   - @Configuration
+- @ConditionalOnXXX
+   - @AutoConfigureAfter - 指定顺序，在其他指定的自动配置类之后应用自动配置
+   - @Bean - 添加组件
+   - @ConfigurationPropertie - 结合相关的 xxxProperties 类来绑定配置
+   - @EnableConfigurationProperties - 让 xxxProperties 生效，并加入到容器中
+   
+3. **模式 - 研究 spring boot 可发现，starter 都是空的，只是用来引入依赖的，而再编写一个 `xxx-starter-autoconfigurer` 来实现自动配置。**
+
+   ![](F:\study-note\Springboot 笔记\图片\启动器.png)
+
+   - xxx-starter 引用 xxx-starter-autoconfigurer 
+   - xxx-starter-autoconfigurer 引用 spring-boot-starter，这个是所有 starter 都需要的
+
+4. 从上面的图可以看到，
+
+   1. HelloService 是编写主要逻辑，也就是这个 starter 提供的组件
+   2. 在加入组件时 - @Bean 时，需要将配置文件设置到组件中
+
+   ![](F:\study-note\Springboot 笔记\图片\自定义自动配置类.png)
+
+   ```java
+   // 启用 HelloProperties.class 来接收配置
+   @EnableConfigurationProperties(HelloProperties.class)
+   
+   // 这里注入 HelloProperties，让 service 来使用
+   @Autowired
+   HelloProperties helloProperties;
+   ...
+   service.setHelloProperties(helloProperties);
+   ```
+
+   # 21 基础课程结束
+
+   可以到 github 中找到 spring boot-sample 项目，里面有 spring boot 整合各种组件的示例代码。
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
