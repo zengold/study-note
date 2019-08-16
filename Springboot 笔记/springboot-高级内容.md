@@ -17,9 +17,9 @@
 
 JSP-107 是一个缓存规范。由 JAVA 官方规定的，从下面图可以看到，有 5 个接口，提供不同的功能。
 
-![](F:\study-note\Springboot 笔记\图片\JSR-107.png)
+![](.\图片\JSR-107.png)
 
-![](F:\study-note\Springboot 笔记\图片\JSP-107-接口.png)
+![](.\图片\JSP-107-接口.png)
 
 **JSP-107 提供的接口，是需要实现的，同时也提供了方便使用缓存的注解。**但是，并不是所有缓存框架都有实现 JSP-107 规范，所以有些麻烦，比较少用。
 
@@ -62,14 +62,14 @@ spring boot 缓存抽象中只有三个核心接口：
 >
 > 其他方法: 
 >
-> ![](F:\study-note\Springboot 笔记\图片\springboot缓存抽象-key.png)
+> ![](.\图片\springboot缓存抽象-key.png)
 
 - keyGenerator：指定 key 生成器，**与 key 二选一**
 - cacheManager / cacheResolver : 相当于指定不同的缓存实现。
 
 > 如图，一边使用 ConcurrentHashMap，另一边使用 Redis
 >
-> ![](F:\study-note\Springboot 笔记\图片\使用多个cacheManager.png)
+> ![](.\图片\使用多个cacheManager.png)
 
 - condition : 符合条件的情况下才进行缓存，可用 SpEL.
 - unless：否定缓存。**当 unless 条件满足时，不缓存**。可获取结果作为判断，**#result**
@@ -99,6 +99,125 @@ Springboot 的缓存自动配置类 - CacheAutoConfiguration。我们从中可�
 1. 被标注缓存注解的方法运行前，先去查询 Cache.getCahce(cacheName)。第一次获取缓存（表示还没有这个 Cache），会创建一个 Cache。
 
 
+
+
+
+
+
+
+
+
+
+# 2 消息
+
+消息服务中间件，消息队列
+
+为什么需要消息队列呢？
+
+主要应用于异步任务、应用解耦、流量削峰（秒杀活动，利用限定容量的消息队列限制流量）等应用场景
+
+## 两个概念
+
+- 消息代理 - 接收存放消息的服务器
+- 目的地 - 消息服务器需要将消息发往的地方
+
+## 消息队列主要有两种目的地
+
+- 队列 - 点对点
+  - A -> 队列 <- B/C/D
+  - 消费后删去消息，一个消息只能被一个消费者消费
+- 主题 - 发布订阅
+  - A -> 主题 <- B & C & D, 同时收到
+  - 多个消费者同时消费一个消息
+
+
+
+JMS - Java 消息服务，基于 JVM消息代理规范
+
+- ActiveMQ、HornetMQ 都是它的实现
+
+AMQP - 高级消息队列协议 / 消息代理规范，兼容 JMS
+
+- RabbitMQ 是它的实现
+
+![](.\图片\JMS与AMQP对比.png)
+
+springboot 两个都支持：
+
+![](.\图片\springboot支持JMS与AMQP.png)
+
+## 整合 RabbitMQ
+
+### 简介
+
+Message
+
+- 消息头 - 有一些属性
+- 消息体 - 不透明的
+
+Publisher - 消息生产者，简称 P
+
+Exchange - 接收消息，转发给指定的队列，不只有一个
+
+Queue - 消息队列，容器，等待消息被消费，不只有一个
+
+Binding - Exchange 与 Queue 的绑定，多对多关系
+
+Connection - 网络连接，与消息服务器建立连接
+
+Channel - 信道。多路复用，建一条TCP连接，在其上开多个信道，减少性能开销。信道是消息通过的通道
+
+Consumer - 消费者，收消息的
+
+Virtual Host - 虚拟主机，vhost。消息服务器可划分出多个虚拟主机，相互之间独立。连接时需要指定虚拟主机，默认是 / 。虚拟主机通过路径划分，如：/abc, /123 ...
+
+Broker - 消息代理，message Broker，就是消息服务器
+
+### 运行机制
+
+![](.\图片\AMQP主要概念.png)
+
+#### 消息路由
+
+对比起 JMS，AMQP 中增加了 Exchange、Binding 
+
+binding - 决定交换器的消息应该发送到哪个队列
+
+Exchange 4种类型：direct、fanout、topic、headers(几乎用不到)
+
+- headers 匹配 AMQP 消息的 header 而不是路由键。和 direct 完全一致，但性能差很多，几乎不用
+
+- direct
+
+  - 消息中路由键与 Binding 中的 binding key 一致，则交换器将消息发送到队列中
+  - 点对点通信模型，单播
+  - 必须完全一致
+
+- fanout
+
+  - 将接收到的信息发给**全部**绑定的队列
+  - 广播模式，速度最快。主题/订阅模型
+
+- topic
+
+  - 允许模糊匹配，通配符 `#` 、`*` ，前者匹配0或多个**单词**，后者匹配一个**单词**
+
+  ![](.\图片\topci exchange.png)
+
+### 整合
+
+1. docker 安装 RabbitMQ，安装带 management 标签的，带web的管理界面
+
+> 注意
+>
+> 1. 带管理界面的有两个端口，5672（ 通信端口） 和 15672（管理界面访问端口）
+> 2. 管理界面用默认的 guest/guest 的用户/密码登陆
+>
+> 3. 管理界面可以直接创建交换器、队列、bingding等
+>    - Durability - 选择是否是持久化的，即下次重启后数据还在不在
+>    - Ack Mode - 可以告诉队列获取后删去消息
+
+2. 
 
 
 

@@ -2181,7 +2181,7 @@ public FilterRegistrationBean webStatFilter() {
 
 3. 效果
 
-![](F:\study-note\Springboot 笔记\图片\druid 监控.jpg)
+![](.\图片\druid 监控.jpg)
 
 ## 18.3 整合 MyBaties
 
@@ -2250,7 +2250,7 @@ public FilterRegistrationBean webStatFilter() {
 
    - 设置驼峰命名法：
 
-   ![](F:\study-note\Springboot 笔记\图片\配置驼峰命名法.jpg)
+   ![](.\图片\配置驼峰命名法.jpg)
    
 4. application.yml 中使用 :
 
@@ -2269,7 +2269,7 @@ public FilterRegistrationBean webStatFilter() {
    - 提供使用流 - API 来对数据访问
    - 提供一些 Repository 接口，包括基本的增删改查、基本的分页功能。我们需要使用时，继承这些接口即可
 
-![](F:\study-note\Springboot 笔记\图片\springdata简介.png)
+![](.\图片\springdata简介.png)
 
 **所以我们只需要面对 SpringData 提供的接口即可，无需面对底层的实现。**
 
@@ -2330,7 +2330,7 @@ public FilterRegistrationBean webStatFilter() {
 
 1. **创建 SpringApplication 对象**
 
-![](F:\study-note\Springboot 笔记\图片\创建SpringApplication对象.png)
+![](.\图片\创建SpringApplication对象.png)
 
 2. 执行 run 方法
    1. 获取 SpringApplicationRunListener 从 META-INF/spring.factories
@@ -2358,7 +2358,7 @@ public FilterRegistrationBean webStatFilter() {
   - ApplicationContextInitializer
   - SpringApplicationRunListener
 
-![](F:\study-note\Springboot 笔记\图片\META-INF_spring-factories.png)
+![](.\图片\META-INF_spring-factories.png)
 
 >  注意：SpringApplicationRunListener 需要有参构造器，否则报错
 
@@ -2374,7 +2374,7 @@ public FilterRegistrationBean webStatFilter() {
 
 2. 编写自动配置类 - 将需要启动就加载的自动配置类，配置在 META-INF/spring.factories。
    
-   ![](F:\study-note\Springboot 笔记\图片\自定义自动配置类存放到spring_factories中.png)
+   ![](.\图片\自定义自动配置类存放到spring_factories中.png)
    
    并使用这些注解：
    
@@ -2387,7 +2387,7 @@ public FilterRegistrationBean webStatFilter() {
    
 3. **模式 - 研究 spring boot 可发现，starter 都是空的，只是用来引入依赖的，而再编写一个 `xxx-starter-autoconfigurer` 来实现自动配置。**
 
-   ![](F:\study-note\Springboot 笔记\图片\启动器.png)
+   ![](.\图片\启动器.png)
 
    - xxx-starter 引用 xxx-starter-autoconfigurer 
    - xxx-starter-autoconfigurer 引用 spring-boot-starter，这个是所有 starter 都需要的
@@ -2397,7 +2397,7 @@ public FilterRegistrationBean webStatFilter() {
    1. HelloService 是编写主要逻辑，也就是这个 starter 提供的组件
    2. 在加入组件时 - @Bean 时，需要将配置文件设置到组件中
 
-   ![](F:\study-note\Springboot 笔记\图片\自定义自动配置类.png)
+   ![](.\图片\自定义自动配置类.png)
 
    ```java
    // 启用 HelloProperties.class 来接收配置
@@ -2410,7 +2410,7 @@ public FilterRegistrationBean webStatFilter() {
    service.setHelloProperties(helloProperties);
    ```
 
-   # 21 基础课程结束
+   # 基础课程结束
 
    可以到 github 中找到 spring boot-sample 项目，里面有 spring boot 整合各种组件的示例代码。
 
