@@ -1,6 +1,6 @@
 # 内容概要
 
-1. 缓存：JSP-107、Spring boot 缓存抽象、整合 Redis
+1. [缓存：JSP-107、Spring boot 缓存抽象、整合 Redis](#1 Springboot 与缓存)
 2. 消息：JMS、AMQP、RabbitMQ
 3. 检索
 4. 任务
@@ -75,7 +75,7 @@ spring boot 缓存抽象中只有三个核心接口：
 - unless：否定缓存。**当 unless 条件满足时，不缓存**。可获取结果作为判断，**#result**
 - sync : 是否使用异步模式
 
-### 1.2.2 原理
+#### 1.2.1.1 原理
 
 Springboot 的缓存自动配置类 - CacheAutoConfiguration。我们从中可以看到加载了 11 个缓存配置类，如：
 
@@ -92,13 +92,72 @@ Springboot 的缓存自动配置类 - CacheAutoConfiguration。我们从中可�
 
 然后数据就保存到这些缓存组件中。
 
-### 1.2.3 运行流程
+#### 1.2.1.2 运行流程
 
 以被 @Cacheable 标注的方法为例。
 
 1. 被标注缓存注解的方法运行前，先去查询 Cache.getCahce(cacheName)。第一次获取缓存（表示还没有这个 Cache），会创建一个 Cache。
+2. 使用 Cache zhong  lookup(key) 方法，查询缓存，这个 key 是由 keyCenerator 生成的。默认使用 SimpleKeyGenerator 生成 key。默认生成策略：
+   - 没有参数：key = new SimpleKey();
+   - 只有一个参数：key = 参数值
+   - 多个参数：key = new SimpleKey(params);
+3. 如果没有查到缓存，则调用目标方法，即被标注的方法
+4. 将目标方法结果放进缓存
 
+#### 1.2.1.3 @Cacheable 的其他属性
 
+1. cacheName / value - 数组，可指定多个
+2. key 拼接：key = "#root.methodName + '[' + #id + ']'"
+3. keyGenerator:
+
+![](G:\woods\study-note\Springboot 笔记\图片\keyGenetator.png)
+
+4. sync：默认是目标执行完，将结果**同步**保存到缓存中。这个属性可以开启异步模式，开启异步模式后不支持 unless
+
+### 1.2.2 @CachePut
+
+既调用方法，又更新缓存
+
+**运行流程**：
+
+1. 先运行目标方法
+2. 再将方法结果保存到缓存中，若缓存中已有该缓存，则更新它
+
+注意：该注解可以使用 `#result`，而 @Cacheable 是不能的，这是运行流程的问题
+
+### 1.2.3 @CacheEvict
+
+用于清除 / 驱逐缓存
+
+1. 可以通过 key 指定需要清楚的缓存
+2. allEntries 属性，表示是否清楚该缓存（Cache）中所有数据
+3. beforeInvocation - 是否在目标方法前执行清楚操作，默认是 false。这两个的区别，可以考虑目标方法出错时的情况，若先执行清楚缓存操作，则目标方法出错时，缓存已经被清除。
+
+### 1.2.4 @Caching
+
+这个注解用于组合其他三种注解，可以自由搭配，同一个注解可以出现多次。如
+
+```java
+@Caching(
+    cacheable={
+        @Cacheable(value = xx, key = xx),
+        @Cacheable(...),
+        ...
+    },
+    put = {
+        @CachePut(...)
+    },
+    evict = {
+        @CacheEvict(...)
+    }
+)
+```
+
+### 1.2.5 @CahceConfig
+
+标注在类上，可以将重复的配置统一配置在该注解上，如，key、keyGenerator 等配置
+
+## 1.3 整合 Redis
 
 
 
