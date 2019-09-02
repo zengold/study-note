@@ -40,3 +40,29 @@ jmeter -n -t [测试计划.jmx] -D javax.net.ssl.keyStore=[jks证书路径] -D j
 HEAP="-Xms2G -Xmx2G" jmeter -n -t [测试计划.jmx]
 ```
 
+## Linux 配置 Jmeter 所有用户可用
+
+1. 切换到 root 用户，将 jmeter 放到 `/usr/local` 目录下。
+
+2. `vi /etc/profile`，然后在相应位置（其实不影响的）添加以下配置：
+
+
+```sh
+...
+export PATH USER LOGNAME MAIL HOSTNAME HISTSIZE HISTCONTROL
+
+#set jmeter
+export JMETER_HOME=/usr/local/apache-jmeter-5.1.1
+export CLASSPATH=$JMETER_HOME/lib/ext/ApacheJMeter_core.jar:$JMETER_HOME/lib/jorphan.jar:$CLASSPATH
+export PATH=$JMETER_HOME/bin:$PATH:$HOME/bin
+
+
+# By default, we want umask to get set. This sets it for login shell
+...
+```
+
+
+3. 保存退出文档，使用 `source /etc/profile` 生效配置
+
+4. 切换到自己的用户下，就可以直接使用 jmeter 命令了
+
