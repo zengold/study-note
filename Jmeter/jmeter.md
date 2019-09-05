@@ -62,7 +62,7 @@ export PATH=$JMETER_HOME/bin:$PATH:$HOME/bin
 ```
 
 
-3. 保存退出文档，使用 `source /etc/profile` 生效配置
+3. 保存退出文档，使用 `. /etc/profile` 生效配置
 
 4. 切换到自己的用户下，就可以直接使用 jmeter 命令了
 
