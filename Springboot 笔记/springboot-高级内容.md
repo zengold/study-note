@@ -9,7 +9,7 @@
 7. 监控管理
 8. 部署
 
-# 1 Springboot 与缓存
+# 1 缓存
 
 临时性数据也可以存缓存中
 
@@ -342,7 +342,7 @@ Message
 
 Publisher - 消息生产者，简称 P
 
-Exchange - 接收消息，转发给指定的队列，不只有一个
+Exchange - 转换器。用于接收消息，转发给指定的队列，不只有一个
 
 Queue - 消息队列，容器，等待消息被消费，不只有一个
 
@@ -350,11 +350,11 @@ Binding - Exchange 与 Queue 的绑定，多对多关系
 
 Connection - 网络连接，与消息服务器建立连接
 
-Channel - 信道。多路复用，建一条TCP连接，在其上开多个信道，减少性能开销。信道是消息通过的通道
+Channel - 信道。多路复用，建一条TCP连接（Connection），在其上开多个信道，减少性能开销。信道是消息通过的通道
 
 Consumer - 消费者，收消息的
 
-Virtual Host - 虚拟主机，vhost。消息服务器可划分出多个虚拟主机，相互之间独立。连接时需要指定虚拟主机，默认是 / 。虚拟主机通过路径划分，如：/abc, /123 ...
+Virtual Host - 虚拟主机，也叫 vhost。消息服务器可划分出多个虚拟主机，相互之间独立。连接时需要指定虚拟主机，默认是 / 。虚拟主机通过路径划分，如：/abc, /123 ...
 
 Broker - 消息代理，message Broker，就是消息服务器
 
@@ -370,11 +370,11 @@ binding - 决定交换器的消息应该发送到哪个队列
 
 Exchange 4种类型：direct、fanout、topic、headers(几乎用不到)
 
-- headers 匹配 AMQP 消息的 header 而不是路由键。和 direct 完全一致，但性能差很多，几乎不用
+- headers 匹配 AMQP 消息的 header（消息头） 而不是路由键。和 direct 完全一致，但性能差很多，几乎不用
 
 - direct
 
-  - 消息中路由键与 Binding 中的 binding key 一致，则交换器将消息发送到队列中
+  - 消息中的路由键与 Binding 中的 binding key 一致，则交换器将消息发送到队列中
   - 点对点通信模型，单播
   - 必须完全一致
 
@@ -402,9 +402,208 @@ Exchange 4种类型：direct、fanout、topic、headers(几乎用不到)
 >    - Durability - 选择是否是持久化的，即下次重启后数据还在不在
 >    - Ack Mode - 可以告诉队列获取后删去消息
 
-2. 
+2. 创建工程整合 RabbitMQ
+
+- 自动配置 - RabbitAUtoConfiguration
+
+  - ConnectionFactory - 自动配置连接工厂
+  - RabbiteProperties - 封装 RabbitMQ 的配置
+  - RabbiteTemplate - 给 RabbiteMQ 发送和接受消息
+  - AmqpAdmin - RabbiteMQ 系统管理功能组件，创建 Exchange、队列等等
+
+- **发送**
+
+  - Message 需要自己构造，可以自定义消息体和消息头
+
+  > rabbiteTemplate 使用自动导入即可
+
+  ```java
+  rabbiteTemplate.send(exchange, routeKey, message) 
+  ```
+
+  - objtec 默认当成消息体，只需要传入需要发送的对象，将会自动序列化并发送给 rabbitMQ
+
+  > 默认使用 java 序列化 
+
+  ```java
+  rabbiteTemplate.converAndSend(exchange, routeKey, object);
+  ```
+
+- **接收**
+
+  - 返回 Message 对象
+
+  ```java
+  rabbiteTemplate.receive(queueName);
+  ```
+
+  - 返回 Object 对象，可强转为对象本身的类
+
+  ```java
+  rabbiteTemplate.receiveAndConvert(queueName);
+  ```
+
+- **Json 序列化**
+
+  - RabbiteTemplate 中有一个 MessageConverter，它默认使用了 SimpleMessageConverter。这个 SimpleMessageConverter 使用了 Java 默认序列化。
+  - 自定义。对 MessageConveter 使用 Ctrl + H，可以获取它的实现。
+
+  ![](.\图片\自定义MessageConverter.png)
+
+- **广播** - 广播时同样使用上面的发送和接受方法，**但是 routeKey 不用写了**，如
+
+```java
+rabbiteTemplate.convertAndSend("exchange.news", "", object);
+```
+
+###  2.2.3 监听
+
+在一般例子中，如订单系统，新建的订单会进入消息队列，然后库存再从订单队列中获取实时获取订单。这就要求库存需要对消息队列进行监听。
+
+**使用 @RabbiteListener 注解进行监听，使用这个同时需要在 Springboot 启动类中加入 @EnableRabbite 来开启基于注解的 RabbiteMQ。**
+
+```java
+@Service
+.... {
+ 	// queues - 监听的队列的名字
+    @RabbiteListener(queues = "queuesName")
+    public Book receive(Book book) {
+        System.out.printl("监听到的消息: " + book);
+	}
+    
+    // 当我们需要额外的数据，如消息头
+    @RabbiteListener(queues = "queuesName")
+    public Book receive(Message message) {
+        // 消息体
+        System.out.printl(message.getBody);
+        // 消息头
+        System.out.printl(message.getMessageProperties());
+	}
+}
+```
+
+### 2.2.4 代码中管理 Queue、Exchange、binding
+
+使用 AmapAdmin 来管理，直接注入就可以使用
+
+- declarexxxx - 都是创建组件
+
+- removexxxx/deletexxxx - 都是删除组件
+
+如：
+
+```java
+amqpAdmin.declareExchange(new DirectExchange("exchangeName"));
+amqpAdmin.declareQueue(new Queue("queueName"));
+// 目的地类 - 可以为 Queue/Exchange
+// exchange - 绑定的交换器
+// 其他参数 - 不需要就填写 null
+amqpAdmin.declareBinding(new Binding("目的地", 目的地类型, exchange, 其他参数))
+```
+
+# 3 检索
+
+使用到的时 ElasticSearch，j简称 ES。并与 Springboot 整合。
+
+![](.\图片\ElasticSearch介绍.png)
+
+**安装**
+
+使用 docker，使用加速
+
+！！注意：ElasticSerach 底层使用 Java 编写，默认状态下启动时会占用 2G 的堆内存，如果不够的话会报错。所以，可以在启动 ElasticSearch 时添加参数，限制它的内存使用：
+
+> ES_JAVA="-Xms256m -Xmx256m" === 限制堆内存使用
+>
+> 9200 - 默认 web 通信端口
+>
+> 9300 - 默认各节点通信端口
+
+```sh
+docker run -e ES_JAVA="-Xms256m -Xmx256m" -d -p 9200:9200 -p 9300:9300 --name ES01 [镜像ID]
+```
+
+然后访问 主机地址:9200 端口，返回 JSON 数据，证明安装成功
+
+## 3.1 入门
+
+存储整个对象/ 文档，可以对文档内容进行检索
+
+使用JSON 格式
+
+存储行为 - 索引 （动词）
+
+需要存储数据，需要先确定数据存到哪里：
+
+先确定要存储的索引（名词），然后所以下可以有多个类型，类型下又有多个文档（数据），每个文档里又有多个属性（JSON字段）
+
+类比 MySQL:
+
+索引（名词）- 确定需要存数据的数据库
+
+类型 - 某个数据库中的可以有多张表
+
+文档 - 表里面有一行行的数据，也就是文档
+
+属性- 表里有多个字段
 
 
+
+**存储/更新数据**
+
+PUT /索引/类型/数据编号
+
+{
+
+​	Json格式消息体
+
+}
+
+
+
+**检索文档**
+
+GET /索引/类型/数据编号
+
+
+
+**删除数据** Delete
+
+
+
+**检查是否存在数据**，可以使用 HEAD，不过数据有没有都没有返回，需要通过返回状态码（200/404）判断
+
+也可以正常使用 GET，这个有返回
+
+
+
+搜索所有
+
+GET /索引/类型/_search
+
+
+
+带条件搜索
+
+> q === 查询字符串
+>
+> last_name:Smith === 字段:值
+
+GET /索引/类型/_search?q=last_name:Smith
+
+
+
+也可以使用**查询表达式**
+
+POST /索引/类型/_search
+
+{
+
+​	xxx
+
+}
+
+可以发现，其实后面主要就是在编写查询表达式，通过查询表达式来操作更复杂的查询
 
 
 
