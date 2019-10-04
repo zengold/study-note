@@ -507,7 +507,7 @@ amqpAdmin.declareBinding(new Binding("目的地", 目的地类型, exchange, 其
 
 ![](.\图片\ElasticSearch介绍.png)
 
-**安装**
+## 3.1 安装 ES
 
 使用 docker，使用加速
 
@@ -525,85 +525,211 @@ docker run -e ES_JAVA="-Xms256m -Xmx256m" -d -p 9200:9200 -p 9300:9300 --name ES
 
 然后访问 主机地址:9200 端口，返回 JSON 数据，证明安装成功
 
-## 3.1 入门
+## 3.2 ES 入门
 
-存储整个对象/ 文档，可以对文档内容进行检索
+ES 区别于传统的数据库，**可以存储整个对象/ 文档，可以对文档内容进行检索**。
 
-使用JSON 格式
+它使用 JSON 格式进行数据存储。
 
-存储行为 - 索引 （动词）
+### 3.2.1 基本概念
 
-需要存储数据，需要先确定数据存到哪里：
+索引 （动词）- 在 ES 中将存储数据的行为叫做索引（这是一个动词）
 
-先确定要存储的索引（名词），然后所以下可以有多个类型，类型下又有多个文档（数据），每个文档里又有多个属性（JSON字段）
+存储数据的时候，需要先确定数据存到哪里：
 
-类比 MySQL:
+先确定要存储的**索引（名词）**，然后所以索引下面可以有多个**类型**，类型下又有多个**文档（数据）**，每个文档里又有多个**属性（JSON字段）**
 
-索引（名词）- 确定需要存数据的数据库
+**类比 MySQL:**
 
-类型 - 某个数据库中的可以有多张表
+索引（名词）- 确定需要存数据的**数据库**
 
-文档 - 表里面有一行行的数据，也就是文档
+类型 - 某个数据库中的可以有多张**表**
 
-属性- 表里有多个字段
+文档 - 表里面有一行行的**数据**，也就是文档
 
+属性 - 表里有多个**字段**
 
+### 3.2.2 使用
 
-**存储/更新数据**
+因为 ES 提供 Restful API 接口，所以可以使用 Postman 等工具发送请求来使用数据的储存和搜索等 ES 功能。
 
+#### **存储/更新数据**
+
+发送如下请求到 ES，表示将 Json 格式消息体中的数据进行**存储/更新**
+
+```http
 PUT /索引/类型/数据编号
-
 {
-
-​	Json格式消息体
-
+	Json格式消息体
 }
+```
 
+#### **检索文档**
 
-
-**检索文档**
-
+```http
 GET /索引/类型/数据编号
+```
 
+#### **删除文档（数据）**
 
+```http
+Delete /索引/类型/数据编号
+```
 
-**删除数据** Delete
+#### **检查是否存在数据**
 
+可以使用 HEAD 方式发送请求，不过数据有没有都没有返回，需要通过返回状态码（200/404）判断
 
+> 也可以正常使用 GET，这个有返回数据，通过返回数据中字段进行判断数据是否存在
 
-**检查是否存在数据**，可以使用 HEAD，不过数据有没有都没有返回，需要通过返回状态码（200/404）判断
+#### **搜索所有**
 
-也可以正常使用 GET，这个有返回
+列出指定的索引、类型下的所有文档
 
-
-
-搜索所有
-
+```http
 GET /索引/类型/_search
+```
 
+#### 带条件搜索
 
-
-带条件搜索
-
-> q === 查询字符串
+> q - 以**查询字符串**的形式进行查询
 >
-> last_name:Smith === 字段:值
+> last_name:Smith - 字段:值
 
+```http
 GET /索引/类型/_search?q=last_name:Smith
+```
 
+**使用查询表达式**
 
-
-也可以使用**查询表达式**
-
+```http
 POST /索引/类型/_search
 
 {
-
-​	xxx
-
+	查询表达式
 }
+```
 
-可以发现，其实后面主要就是在编写查询表达式，通过查询表达式来操作更复杂的查询
+**可以发现，其实后面主要就是在编写查询表达式，通过查询表达式来操作更复杂的查询**
+
+## 3.3 整合 ElasticSearch
+
+Springboot 支持两种整合（连接）Elasticsearch 的方法：
+
+- SpringData 
+
+该方法需要引入 `spring-boot-starter-data-elasticsearch` 依赖。
+
+使用  SpringData ElasticSearch 模块进行操作，该方法是 Springboot 默认的。
+
+- Jest
+
+该方法需要引入第三方的依赖包 `io.searchbox.client.JestClient`。
+
+使用 JestClient 进行操作。该方法默认不生效的，只有在引入包后才启用。
+
+### 3.3.1. Jest
+
+1. 需要配置
+
+```properties
+# 默认配置为 http://loacalhost:9200
+spring.elastricsearch.jest.uris =http://[ES的地址]:[ES的web通信端口]
+```
+
+2. 自动注入 JestClient 即可使用
+
+注意：**实体类中主键需要加上 @JestId 注解，以标明这是主键**
+
+#### 储存 - Index
+
+```java
+// 构建一个索引（动词）功能
+// 还有 .id() 指定数据ID的方法，但如果实体类中已经设置了 ID 就不需要了
+Index index = new Index.Builder(实体类对象).index(数据储存的索引名).type(类型).build();
+// 执行
+jestClient.execute(index);
+```
+
+#### 搜索 - Search
+
+使用**查询表达式**来进行搜索
+
+```java
+String json = 查询表达式
+Search search = new Search.Builder(json).addIndex(要搜索的索引名).addType(类型).build();
+jestClient.execute(search);
+```
+
+详细的使用可以去看 github 上面的 Jest 官方文档
+
+### 3.3.2 SpringData ElasticSearch
+
+需要配置 Client 的节点信息，如 clusterNodes、clusterName
+
+```properties
+# 集群名
+spring.data.elasticsearch.cluster-name = elasticsearch
+# 配置节点信息，默认 9300 端口
+spring.data.elasticsearch.cluster-nodes = [ES地址]:[ES的节点通讯端口]
+```
+
+注意：
+
+springData  与 Elasticsearch 可能存在版本不适配的问题，这样会导致报错**中说 9300 端口无法连接等。**
+
+[版本适配说明](https://github.com/spring-projects/spring-data-elasticsearch)
+
+![](.\图片\ES版本适配.png)
+
+> 现在[20191004]
+>
+> |                  Spring Data Release Train                   |                  Spring Data Elasticsearch                   |                        Elasticsearch                         |                         Spring Boot                          |
+> | :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
+> | Moore[[1](https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/#_footnotedef_1)] | 3.2.x[[1](https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/#_footnotedef_1)] | 6.8.1 / 7.x[[2](https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/#_footnotedef_2)] | 2.2.0[[1](https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/#_footnotedef_1)] |
+> |                           Lovelace                           |                            3.1.x                             | 6.2.2 / 7.x[[2](https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/#_footnotedef_2)] |                            2.1.x                             |
+> | Kay[[3](https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/#_footnotedef_3)] | 3.0.x[[3](https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/#_footnotedef_3)] |                            5.5.0                             | 2.0.x[[3](https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/#_footnotedef_3)] |
+> | Ingalls[[3](https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/#_footnotedef_3)] | 2.1.x[[3](https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/#_footnotedef_3)] |                            2.4.0                             | 1.5.x[[3](https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/#_footnotedef_3)] |
+
+如果版本不适配，两个办法：
+
+- 升级 spirngboot 版本
+- 安装对应版本的ES
+
+两种用法，可以参考上面出现的文档连接
+
+https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/
+
+#### 编写一个 ElasticsearchRepository 的子接口来操作 ES，类似 JPA 
+
+- 编写后注入 ElasticsearchRepository 的子接口，即可使用
+
+- ElasticsearchRepository 中可以看到有储存和搜索的方法
+
+- 实体类中需要加上注解，以标明该数据储存到哪个索引和类型下
+
+```java
+@Document(indexName="索引名", type="类型名")
+public class Book {
+ ...   
+}
+```
+
+- 同样支持像 JPA 一样，在 ElasticsearchRepository 的子接口中加入自定义的方法
+
+#### ElasticsearchTemplate 操作 ES
+
+参照文档 https://docs.spring.io/spring-data/elasticsearch/docs/3.2.0.RELEASE/reference/html/
+
+# 4 任务
+
+## 4.1 异步任务
+
+
+
+
+
+
 
 
 
