@@ -725,11 +725,106 @@ public class Book {
 
 ## 4.1 异步任务
 
+在方法上使用注解 @Async ，可以告诉 Springboot 创建线程去进行异步处理。
+
+要使这个 @Async 注解生效，必须在启动类中添加 @EnableAsync 注解
+
+这个可以很智能，比如，一个 hello 接口，经过睡眠 3 秒后返回字符串 success。那么正常请求这个接口需要等待3 秒之后才可以看到 success 结果，如果使用 @Async 与 @EnableAsync 注解，那么 Springboot 则自动创建另一条线程进行睡眠，直接返回 success，所以可以直接看到 success 接口。
+
+## 4.2 定时任务
+
+凌晨时，分析日志等
+
+Springboot 提供了异步执行任务调度的方式，提供 TaskExecutor、TaskScheduler 接口
+
+![](.\图片\定时任务.png)
 
 
 
+使用 @Scheduled 标记在方法上，表示这个方法定时执行。
 
+使用 @EnableScheduling 开启定时任务。
 
+**cron 表达式：**
+
+一共有6位，每位之间使用空格分隔，如`0 * * * * Mon-Fir` ，从左到右，分别表示：
+
+秒、分、时、月中的日期、月份、星期几。24小时制
+
+而该例子则表示：从周一到周五，任意月份、任意日期、任意小时、任意分钟，0 秒时执行定时任务，换句话说就是周一到周五的每分钟的0秒执行一次。
+
+**特殊符号**
+
+， 枚举，意思就是使用逗号分隔各个希望的时间，如秒位的，1,2,3,4 则表示1，2，3，4秒都执行
+
+区间 - 就是区间内以及端点都执行，
+
+步长 - 表示每隔多少时间执行一次，比如秒位，0/4，则表示0秒启动（即不延迟启动），每4秒执行一次
+
+？- 日和星期的冲突匹配，比如，在日位上写了 *，星期里写了 Mon，但实际情况不是任意一天都是 Mon，所以日位上应该写 ？。反过来同理。
+
+## 4.3 邮件任务
+
+![](.\图片\邮件任务.png)
+
+需要引入springboot mail 的启动器。
+
+**了解邮件发送流程**
+
+比如有两个邮箱A、B。A 进行邮件发送，B 进行邮件接收。那么：
+
+1. A 通过自己的账号、密码，登录到 A 邮箱的邮箱服务器，然后通过该邮箱服务器将编写好的邮件发送给 B邮箱的邮箱服务器。
+2. 用户想在 B 接收邮件时，通过 B 邮箱的账号、密码登录 B 邮箱，然后 B 邮箱从 B 邮箱服务器上拉取邮件。
+
+所以，如果希望发送邮件，需要知道：
+
+- 用于发送邮件的邮箱账号、密码
+- 发送邮件的邮箱服务器地址
+
+使用如下配置在 application 中配置
+
+```properties
+spring.mail.username=邮箱账号
+spring.mail.password=邮箱密码，通常邮箱会使用授权码代替密码，以避免泄密
+spring.mail.host=发送邮件的邮箱服务器地址，如 QQ 邮箱为 smtp.qq.com
+# 如果提示邮件发送需要 SSL 连接，则添加如下配置
+# mail 额外的配置都在 spring.mail.properties 下
+spring.mail.properties.mail.smtp.ssl.enable=true
+```
+
+**使用**
+
+自动注入 JavaMailSenderImpl，即可使用，如：
+
+```java
+@Autowired
+JavaMailSenderImpl mailSender
+...
+
+// 简单邮件
+SimpleMailMessage message = new SimpleMailMessage();
+// 邮件内容的设置，包括目的邮箱地址，以及发送人等等
+message.setSubject("...")
+
+mailSender.send(message);
+```
+
+以上是发送简单邮件的例子，简单邮件中没有添加附件等功能。如果希望有这些功能，则需要创建复杂邮件 MimeMessage。但这个邮件并不能直接设置邮件内容，需要借助另一个类 MimeMessageHelper。
+
+```java
+// 复杂邮件
+MimeMessage mimeMessage = mailSender.createMimeMessage();
+// true 表示该复杂邮件需要上传附件
+MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+// 设置内容
+helper.set...
+// 添加附件
+helper.addAttachment("附件名", 附件源);
+
+mailSender.send(mimeMessage);
+```
+
+# 5 安全
 
 
 
