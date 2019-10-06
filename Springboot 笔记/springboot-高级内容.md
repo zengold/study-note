@@ -826,6 +826,94 @@ mailSender.send(mimeMessage);
 
 # 5 安全
 
+如今有两大安全权限框架，一个是 shiro，另一个是 spring Security。
+
+这里整合 spring security。
+
+## 5.1 整合 spring security
+
+安全框架的主要功能，就是认证和授权。
+
+认证 - 证明用户是谁。
+
+授权 - 是否拥有访问资源的权限
+
+**步骤**
+
+1. 引入 SpringSecurity 模块 spirng-boot-starter-security
+
+2. 编写配置类，参考springSecurity官方文档。编写的配置类继承 WebSecurityConfigurerAdapter，且需要加上注解 @EnableWebSecurity
+
+   > 由于 @EnableWebSecurity 已经包含 @Configuration 注解，所以不需要再额外写 @Configuration
+
+```java
+@EnableWebSecurity
+public class MyConfigure extends WebSecurityConfigurerAdapter {
+    ...
+}
+```
+
+3. 定制请求的授权规则：在上面的配置类中重写方法 configure(HttpSecurity http)。
+
+```java
+@EnableWebSecurity
+public class MyConfigure extends WebSecurityConfigurerAdapter {
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        // 定制请求的授权规则
+        http.authorizeRequests
+            // permitAll 允许所有用户访问
+            .antMatchers("/").permitAll()
+            // 需要有角色 VIP1 才可以访问
+            .antMatchers("/level1/**").hasRole("VIP1")
+            .antMatchers("/level2/**").hasRole("VIP2")
+            .antMatchers("/level3/**").hasRole("VIP3")
+            
+        // 开启自动配置的登录功能，springSecurity会自动帮我们生成一个登录页面，如果在访问系统中还未认证时，会自动跳转到登录页。
+        // 1. /login 来到登录页
+        // 2. 如果登录失败，会重定向到 /login?error
+		http.formLogin();
+        
+        // 开启自动配置的注销功能
+        // logoutSuccessUrl 表示注销后返回首页
+        http.logout().logoutSuccessUrl("/");
+        // 访问 /logout 表示用户注销，并情况 session
+        // 退出成功后，默认返回 /login?logout 页面
+    }
+}
+```
+
+4. 上面定义的是授权规则，而登录需要**认证规则，这里我们定义认证规则**，同样需要重写 configure 方法，不过参数不一样，configure(AuthenticationManagerBuilder auth)。定义后，在登录时，就会从这里校验账号和密码的对错，以及登录后的权限。
+
+```java
+@Override
+protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+    // inMemory 表示保存到内存中，如果连接数据库，也可以使用 jdbcAuthentication
+    auth.inMemoryAuthentication()
+        .withUser("zhangsan").password("123456").roles("VIP1", "VIP2")
+        // 表示另一个
+        .and()
+        .withUser("lisi").password("123456").roles("VIP2","VIP3")
+        .and()
+        .withUser("wangwu").password("123456").roles("VIP1","VIP3");
+}
+```
+
+
+
+springSecurity 除了以上还提供了一些 HTML 的属于，以方便将认证和授权的状态与页面进行结合，比如可以通过属性 sec:authorize="isAuthenticated()" 获取通过认证的状态。
+
+还有很多其他的用法和属性，需要参考官方文档
+
+另外，如果是使用 thymeleaf 作页面，需要引入 thymeleaf-security 的整合包
+
+```html
+<!-- 这个就表示认证通过后，才显示 div 中的内容 -->
+<div sec:authorize="isAuthenticated()">
+    ...
+</div>
+```
+
 
 
 
