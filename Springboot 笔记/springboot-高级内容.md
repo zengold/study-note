@@ -876,9 +876,18 @@ public class MyConfigure extends WebSecurityConfigurerAdapter {
         
         // 开启自动配置的注销功能
         // logoutSuccessUrl 表示注销后返回首页
-        http.logout().logoutSuccessUrl("/");
+        http.logout().logoutSuccessUrl("/")
+            // 自定义登陆页面路径
+            .loginPage("/userlogin");
         // 访问 /logout 表示用户注销，并情况 session
         // 退出成功后，默认返回 /login?logout 页面
+        // 默认 post 形式的 /login 代表登陆的处理，只要往 /login 发送 post 请求就表示登陆
+        
+        // 开启记住我功能
+        http.rememberme();
+        // 登陆页面多了一个 rememberme 的勾选。
+        // 勾选 rememberme 并登陆后，将 cookie 发给浏览器保存，以后访问页面会带上这个 cookie，只要通过检查就可以免登陆
+        // 点击注销会删除 cookie
     }
 }
 ```
@@ -899,20 +908,38 @@ protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 }
 ```
 
-
-
-springSecurity 除了以上还提供了一些 HTML 的属于，以方便将认证和授权的状态与页面进行结合，比如可以通过属性 sec:authorize="isAuthenticated()" 获取通过认证的状态。
+SpringSecurity 除了以上还提供了一些 **HTML 的属性**，以方便将认证和授权的状态与页面进行结合，比如可以通过属性 sec:authorize="isAuthenticated()" 获取通过认证的状态。
 
 还有很多其他的用法和属性，需要参考官方文档
 
 另外，如果是使用 thymeleaf 作页面，需要引入 thymeleaf-security 的整合包
 
 ```html
+<!-- 添加 thymeleaf-security 的规范 -->
+<html xmlns:sec="http://www.thymeleaf.org/themeleaf-extras-springsecurity4">
+
 <!-- 这个就表示认证通过后，才显示 div 中的内容 -->
 <div sec:authorize="isAuthenticated()">
     ...
 </div>
+
+<!-- 这个就表示未认证时，才显示 div 中的内容 -->
+<div sec:authorize="!isAuthenticated()">
+    ...
+</div>
+
+<!-- 拿出认证后的用户名 -->
+<span sec:authentication="name"></span>
+<!-- 拿出当前认证用户拥有的所有角色 -->
+<span sec:authentication="principal.authorities"></span>  
+    
+<!-- 表示拥有 VIP1 角色才显示 div 中内容 -->
+<div sec:authorize="hasRole('VIP1')">
+    ...
+</div>
 ```
+
+
 
 
 
