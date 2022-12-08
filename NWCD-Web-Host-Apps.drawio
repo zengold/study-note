@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-12-08T13:32:23.591Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36" version="20.6.0" etag="Lmz3qn1DtA75B_YgWGhE" type="github">
+<mxfile host="app.diagrams.net" modified="2022-12-08T13:32:49.413Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36" version="20.6.0" etag="LlWLfyRaDXVZds11wqVX" type="github">
   <diagram id="NBsggCKVuBA1LdsYjbiz" name="第 1 页">
     <mxGraphModel dx="1209" dy="586" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -217,7 +217,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="g7H52zCNC9NMij33Aelw-84" value="Mobile client" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=#232F3E;fillColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.mobile_client;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry x="192" y="24" width="40" height="40" as="geometry" />
+          <mxGeometry x="247" y="24" width="40" height="40" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
